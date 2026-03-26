@@ -826,7 +826,7 @@ textarea { resize: vertical; min-height: 68px; }
   .rooms-grid { grid-template-columns: repeat(2,1fr); }
   .table-wrap { overflow-x: auto; }
   table { min-width: 540px; }
-  .fab { display: flex; }
+  .fab { display: flex; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
   .mobile-nav { display: block; }
   .date-badge { display: none; }
   #topbar { padding: 0 13px; }
