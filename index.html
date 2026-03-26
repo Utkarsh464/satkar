@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#3d5a4c"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="RoomAdmin"/>
+<meta name="description" content="Private Room & Client Management Dashboard"/>
+<title>RoomAdmin — Private Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="css/style.css"/>
+<style>
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-8px);}40%{transform:translateX(8px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}}
+.shake{animation:shake .4s ease;}
+.price-toggle{display:flex;gap:8px;align-items:center;margin-bottom:4px;}
+.price-toggle label{font-size:12px;font-weight:500;color:var(--text-body);text-transform:none;letter-spacing:0;cursor:pointer;}
+#c-price-night-wrap,#c-total-wrap{transition:opacity .2s;}
+.checkout-summary{background:var(--page-bg);border-radius:var(--radius);padding:16px;margin-bottom:18px;}
+.co-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-light);font-size:13px;}
+.co-row:last-child{border:none;}
+.co-row strong{font-weight:700;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-box">
+    <div class="login-logo-mark">🏨</div>
+    <div class="login-logo">RoomAdmin</div>
+    <div class="login-sub">Private admin access only</div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="login-email" placeholder="admin@yourplace.com" value="admin@roomadmin.com"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="••••••••" value="admin123"/>
+    </div>
+    <button class="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="login-error">❌ Invalid credentials. Please try again.</div>
+    <div class="login-hint">Demo: <code>admin@roomadmin.com</code> / <code>admin123</code></div>
+  </div>
+</div>
+
+<!-- ID LIGHTBOX -->
+<div id="id-lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="ID Image"/>
+  <p>Tap anywhere to close</p>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- SIDEBAR — dark forest green, matches reference -->
+<aside id="sidebar">
+
+  <!-- Profile block -->
+  <div class="sidebar-profile">
+    <div class="sidebar-avatar">🏨</div>
+    <div class="sidebar-name">Admin</div>
+    <div class="sidebar-email">admin@roomadmin.com</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <div class="nav-icon">📊</div> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('rooms',this)">
+      <div class="nav-icon">🛏️</div> Rooms
+    </div>
+    <div class="nav-item" onclick="showPage('clients',this)">
+      <div class="nav-icon">👥</div> Clients
+    </div>
+    <div class="nav-section-label">Finance</div>
+    <div class="nav-item" onclick="showPage('revenue',this)">
+      <div class="nav-icon">💰</div> Revenue
+    </div>
+    <div class="nav-section-label">Records</div>
+    <div class="nav-item" onclick="showPage('history',this)">
+      <div class="nav-icon">🕐</div> Visit History
+    </div>
+  </nav>
+
+  <!-- Active users section — like reference "ACTIVE USERS" with avatars -->
+  <div class="sidebar-active-users">
+    <div class="sau-label">Active Guests</div>
+    <div class="sau-row" id="sau-row">
+      <div class="sau-avatar">R</div>
+      <div class="sau-avatar">P</div>
+      <div class="sau-avatar">S</div>
+      <div class="sau-more" id="sau-more">+2</div>
+    </div>
+    <!-- Dot-map decoration like reference -->
+    <div class="sau-map"><div class="sau-map-line"></div></div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="admin-badge">
+      <div class="admin-avatar">A</div>
+      <div class="admin-info">
+        <div class="admin-name">Admin</div>
+        <div class="admin-role">Owner · Full Access</div>
+      </div>
+      <span class="logout-btn" onclick="logout()" title="Logout">⏻</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="topbar-left">
+      <button class="hamburger" onclick="toggleSidebar()">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="page-title" id="topbar-title">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="date-badge" id="date-badge"></div>
+      <button class="btn-icon" title="Refresh" onclick="refreshData()"><span>🔄</span></button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- ═══════ DASHBOARD ═══════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="stats-grid" id="stats-grid"></div>
+      <div class="dash-lower" id="dash-lower">
+        <!-- Occupied Rooms panel -->
+        <div class="dash-panel">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Occupied Rooms</div>
+              <div class="section-sub">Currently checked-in</div>
+            </div>
+            <button class="btn btn-dark btn-sm" onclick="showPage('rooms',null)">View All</button>
+          </div>
+          <div id="dash-occupied-rooms"></div>
+        </div>
+        <!-- Recent Check-ins panel — styled like "Last Trips" in reference -->
+        <div class="dash-panel">
+          <div class="section-header">
+            <div>
+              <div class="section-title">Recent Check-ins</div>
+              <div class="section-sub">Overview of latest month</div>
+            </div>
+            <button class="btn btn-dark btn-sm" onclick="showPage('history',null)">View All</button>
+          </div>
+          <div id="dash-recent-checkins"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ ROOMS ═══════ -->
+    <div id="page-rooms" class="page">
+      <div class="section-header">
+        <div class="section-title">All Rooms</div>
+        <button class="btn btn-dark" onclick="openAddRoom()">+ Add Room</button>
+      </div>
+      <div class="rooms-grid" id="rooms-grid"></div>
+    </div>
+
+    <!-- ═══════ CLIENTS ═══════ -->
+    <div id="page-clients" class="page">
+      <div class="section-header">
+        <div class="section-title">Client Records</div>
+        <button class="btn btn-dark" onclick="openAddClient()">+ Add Client</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input class="search-input" id="client-search" placeholder="🔍  Search by name or mobile..." oninput="renderClientsTable()"/>
+          <select style="border-radius:99px;padding:6px 13px;border:1.5px solid var(--border);font-size:12px;background:var(--page-bg);outline:none;" id="client-filter" onchange="renderClientsTable()">
+            <option value="all">All Clients</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead><tr><th>Client</th><th>ID Type</th><th>Room</th><th>Total Spent</th><th>Status</th><th>ID Image</th></tr></thead>
+            <tbody id="clients-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════ REVENUE ═══════ -->
+    <div id="page-revenue" class="page">
+      <div class="section-header">
+        <div class="section-title">Revenue Overview</div>
+      </div>
+      <div class="rev-filters">
+        <div class="rev-filter active" onclick="setRevFilter('today',this)">Today</div>
+        <div class="rev-filter" onclick="setRevFilter('7days',this)">Last 7 Days</div>
+        <div class="rev-filter" onclick="setRevFilter('30days',this)">Last 30 Days</div>
+        <div class="rev-filter" onclick="setRevFilter('custom',this)">Custom</div>
+      </div>
+      <div class="custom-range" id="custom-range-inputs">
+        <input type="date" id="rev-from" onchange="renderRevenue()"/>
+        <span style="font-size:12px;color:var(--text-muted);">→</span>
+        <input type="date" id="rev-to" onchange="renderRevenue()"/>
+      </div>
+      <div class="rev-cards" id="rev-cards"></div>
+      <div class="chart-container">
+        <div class="chart-header">
+          <div class="chart-title">Revenue Trend</div>
+          <div class="chart-legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#c9921a;"></div>
+              Daily Revenue
+            </div>
+          </div>
+        </div>
+        <canvas id="revenue-chart"></canvas>
+      </div>
+      <div class="table-wrap" id="rev-table-wrap"></div>
+    </div>
+
+    <!-- ═══════ HISTORY ═══════ -->
+    <div id="page-history" class="page">
+      <div class="section-header">
+        <div class="section-title">Visit History</div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <input class="search-input" id="history-search" placeholder="🔍  Search by client or room..." oninput="renderHistoryTable()"/>
+        </div>
+        <div style="overflow-x:auto;" id="history-table-container"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- FAB -->
+<button class="fab" id="global-fab">
+  <span>+</span><span class="fab-label">Add</span>
+</button>
+
+<!-- MOBILE NAV -->
+<nav class="mobile-nav">
+  <div class="mobile-nav-items">
+    <div class="mnav-item active" onclick="showPage('dashboard',null)">
+      <div class="mnav-icon">📊</div><div class="mnav-label">Home</div>
+    </div>
+    <div class="mnav-item" onclick="showPage('rooms',null)">
+      <div class="mnav-icon">🛏️</div><div class="mnav-label">Rooms</div>
+    </div>
+    <div class="mnav-item" onclick="showPage('clients',null)">
+      <div class="mnav-icon">👥</div><div class="mnav-label">Clients</div>
+    </div>
+    <div class="mnav-item" onclick="showPage('revenue',null)">
+      <div class="mnav-icon">💰</div><div class="mnav-label">Revenue</div>
+    </div>
+    <div class="mnav-item" onclick="showPage('history',null)">
+      <div class="mnav-icon">🕐</div><div class="mnav-label">History</div>
+    </div>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ════ MODALS ════ -->
+
+<!-- ROOM MODAL -->
+<div class="modal-overlay center-modal" id="modal-room">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="room-modal-title">Add Room</div>
+    <form id="room-form" onsubmit="event.preventDefault()">
+      <div class="form-grid">
+        <div class="form-group"><label>Room Number *</label><input type="text" id="room-number" placeholder="101"/></div>
+        <div class="form-group"><label>Floor</label>
+          <select id="room-floor"><option>Ground Floor</option><option>First Floor</option><option>Second Floor</option><option>Third Floor</option></select>
+        </div>
+        <div class="form-group"><label>Room Type</label>
+          <select id="room-type"><option>Single</option><option>Double</option><option>Suite</option><option>Deluxe</option></select>
+        </div>
+        <div class="form-group"><label>Price / Night (₹) *</label><input type="number" id="room-price" placeholder="800" min="0"/></div>
+        <div class="form-group full"><label>Notes</label><textarea id="room-notes" placeholder="AC, window view, etc." style="min-height:52px;"></textarea></div>
+      </div>
+    </form>
+    <div class="form-actions">
+      <button class="btn btn-danger btn-sm" id="room-delete-btn" onclick="deleteRoom()" style="margin-right:auto;">Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('modal-room')">Cancel</button>
+      <button class="btn btn-dark" onclick="saveRoom()">Save Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROOM DETAIL MODAL -->
+<div class="modal-overlay" id="modal-room-detail">
+  <div class="modal"><div class="modal-handle"></div><div class="modal-title">Room Details</div><div id="rd-content"></div></div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div class="modal-overlay" id="modal-client">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="client-modal-title">Add Client & Visit</div>
+    <div class="returning-banner" id="returning-banner">
+      <div class="rb-icon">⭐</div>
+      <div class="rb-text">
+        <strong>Returning Guest: <span id="rb-name"></span></strong>
+        <p><span id="rb-visits"></span> previous visit(s) on record</p>
+        <div class="rb-actions">
+          <button class="btn btn-purple btn-xs" id="rb-autofill-btn">Load Info</button>
+          <button class="btn btn-outline btn-xs" onclick="document.getElementById('returning-banner').classList.remove('show')">Dismiss</button>
+        </div>
+      </div>
+    </div>
+    <form id="client-form" onsubmit="event.preventDefault()">
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:9px;">Guest Information</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Full Name *</label><input type="text" id="c-name" placeholder="Rahul Sharma"/></div>
+        <div class="form-group"><label>Mobile *</label><input type="tel" id="c-mobile" placeholder="9876543210" oninput="checkReturningClient()"/></div>
+        <div class="form-group"><label>ID Type</label>
+          <select id="c-idtype"><option>Aadhaar Card</option><option>PAN Card</option><option>Passport</option><option>Voter ID</option><option>Driving Lic.</option></select>
+        </div>
+        <div class="form-group"><label>ID Number</label><input type="text" id="c-idnum" placeholder="XXXX-XXXX-1234"/></div>
+        <div class="form-group"><label>Status</label><select id="c-status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+        <div class="form-group"><label>Notes</label><input type="text" id="c-notes" placeholder="Preferences, remarks…"/></div>
+      </div>
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:13px 0 9px;">Government ID Image</div>
+      <div class="upload-area" onclick="triggerUpload()" id="upload-area">
+        <div class="upload-icon">📎</div>
+        <div style="font-size:12px;font-weight:600;">Tap to upload ID image</div>
+        <div class="upload-hint">JPG, PNG up to 5MB</div>
+        <img id="id-preview" class="upload-preview" style="display:none;" alt="ID preview"/>
+      </div>
+      <div class="upload-actions">
+        <button type="button" class="btn btn-outline btn-xs" onclick="event.stopPropagation();triggerUpload()">📁 Browse</button>
+        <button type="button" class="btn btn-outline btn-xs" onclick="event.stopPropagation();openCamera()">📷 Camera</button>
+        <button type="button" class="btn btn-danger btn-xs" id="clear-img-btn" style="display:none;" onclick="event.stopPropagation();clearImage()">Remove</button>
+      </div>
+      <input type="file" id="id-file-input" accept="image/*" style="display:none;" onchange="handleFileSelect(event)"/>
+      <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin:15px 0 9px;">Check-in Details <span style="font-weight:400;opacity:.6;">(optional)</span></div>
+      <div class="form-grid">
+        <div class="form-group"><label>Room Number</label><input type="text" id="c-room" placeholder="101"/></div>
+        <div class="form-group"><label>Check-in Date</label><input type="date" id="c-checkin"/></div>
+        <div class="form-group"><label>Price Mode</label><select id="c-price-mode"><option value="preset">Preset</option><option value="custom">Custom</option></select></div>
+        <div class="form-group" id="c-price-night-wrap"><label>Price / Night (₹)</label><input type="number" id="c-price-night" placeholder="800" min="0"/></div>
+        <div class="form-group full" id="c-total-wrap"><label>Total Amount (₹)</label><input type="number" id="c-total" placeholder="0" min="0"/></div>
+      </div>
+    </form>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-client')">Cancel</button>
+      <button class="btn btn-gold" onclick="saveClient()">Save Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT DETAIL -->
+<div class="modal-overlay" id="modal-client-detail">
+  <div class="modal"><div class="modal-handle"></div><div class="modal-title" id="cd-title">Client Profile</div><div id="cd-content"></div></div>
+</div>
+
+<!-- CLIENT HISTORY -->
+<div class="modal-overlay" id="modal-client-history">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="ch-client-name">Visit History</div>
+    <div id="ch-client-info"></div>
+    <div id="ch-visits"></div>
+    <div class="form-actions" style="margin-top:14px;">
+      <button class="btn btn-outline" onclick="closeModal('modal-client-history')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- CAMERA -->
+<div class="modal-overlay center-modal" id="modal-camera">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Capture ID Photo</div>
+    <video id="camera-video" autoplay playsinline></video>
+    <canvas id="camera-canvas" style="display:none;"></canvas>
+    <div class="camera-controls">
+      <button class="btn btn-outline" onclick="stopCamera()">Cancel</button>
+      <button class="btn btn-dark" onclick="capturePhoto()">📷 Capture</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT -->
+<div class="modal-overlay center-modal" id="modal-checkout">
+  <div class="modal" style="max-width:390px;">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Checkout Guest</div>
+    <div class="checkout-summary">
+      <div class="co-row"><span>Guest</span><strong id="co-client-name">—</strong></div>
+      <div class="co-row"><span>Room</span><strong id="co-room">—</strong></div>
+      <div class="co-row"><span>Check-in</span><strong id="co-checkin">—</strong></div>
+      <div class="co-row"><span>Total Amount</span><strong id="co-total" style="color:#065f46;">—</strong></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="closeModal('modal-checkout')">Cancel</button>
+      <button class="btn btn-success" id="co-confirm-btn">Confirm Checkout ✓</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/chart.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
