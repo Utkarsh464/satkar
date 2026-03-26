@@ -822,7 +822,7 @@ textarea { resize: vertical; min-height: 68px; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .form-grid { grid-template-columns: 1fr; }
   .rev-cards { grid-template-columns: 1fr; }
-  #content { padding: 14px 14px 88px; }
+  #content { padding: 14px 14px calc(140px + env(safe-area-inset-bottom, 0px)); }
   .rooms-grid { grid-template-columns: repeat(2,1fr); }
   .table-wrap { overflow-x: auto; }
   table { min-width: 540px; }
